@@ -47,11 +47,11 @@ DeepSeek-R1-Distill-Llama-70B's notebook differs structurally from the others, s
 - Evaluated only on the challenging subset of the test set (0.65 < Overall Similarity Score < 1.0), not the full test set, per §3.3 of the paper.
 - Uses a much larger generation budget (`max_new_tokens=2048` vs. 4 for every other model) and a correspondingly larger `max_seq_length`, to allow the reasoning trace to complete.
 - Answer extraction searches only the text *after* `</think>` for "Yes"/"No", rather than the whole decoded output, to avoid picking up an incidental mention of either word from within the reasoning trace itself.
-- Uses its own prompt format (`<｜begin▁of▁sentence｜><｜User｜>...<｜Assistant｜>`) rather than a chat template, since no Unsloth-registered chat template exists for this model. The same pre-formatted prompt text is placed inside this wrapper.
+- Uses its own prompt format (`<｜begin▁of▁sentence｜><｜User｜>...<｜Assistant｜>`) rather than a chat template, since no Unsloth-registered chat template exists for this model. The same pre-formatted prompt from the `instructions` column is placed in the user turn of this wrapper (between `<｜User｜>` and `<｜Assistant｜>`).
 
-  ### Prompt template
+### Prompt template
 
-Every generative LLM in this study received exactly the same prompt, shown below (also Figure 2 in the paper). To avoid any risk of the template changing across models, the prompt is **not** built on the fly inside each notebook. Instead, every record pair was pre-formatted into this template once, ahead of time, and saved as a single text field alongside the data. All fine-tuning and inference notebooks read these pre-formatted prompts directly, so the only model-specific step is wrapping the prompt in each model's own chat template.
+Every generative LLM in this study received exactly the same prompt, shown below (also Figure 2 in the paper). To avoid any risk of the template changing across models, the prompt is **not** built on the fly inside each notebook. Instead, every record pair was pre-formatted into this template once, ahead of time, and saved in the `instructions` column of the input data. All fine-tuning and inference notebooks read this column directly and place its content, unchanged, in the **user** role of each model's chat template. The only model-specific step is therefore the chat template itself, which wraps the same user message in each model's own role tokens.
 
 ```text
 You are given two patient records. Your task is to determine whether they belong to the same individual. Consider factors such as name similarity, date of birth, and other identifying attributes. Only respond with "Yes" or "No".
@@ -77,9 +77,7 @@ Record 2:
 
 Notes:
 - Missing identifiers (e.g., SSN or Address) are filled in with the word `Unknown`.
-- The system prompt `You are a helpful assistant` is used for all models during both fine-tuning and inference, except DeepSeek-R1, which, following its developers' recommendation, is run without a system prompt.
 - During fine-tuning, the ground-truth label (`Yes` or `No`) is supplied as the assistant's response; at inference, the model generates it.
-- Because the pre-formatted prompts contain patient identifiers, they are not included in this repository. To reproduce the pipeline on your own data, format each record pair into the template above before running the notebooks.
 
 ## Requirements
 

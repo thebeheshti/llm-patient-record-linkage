@@ -1,4 +1,4 @@
-# Patient Record Linkage Using Language Models
+# Patient Record Linkage Using Open-Weight Language Models
 
 This repo contains all the training and inference code for every model evaluated in *"Leveraging Open-Weight Language Models for Automated Patient Record Linkage"* (Beheshti et al., submitted to *BMC Medical Informatics and Decision Making*).
 

@@ -54,7 +54,9 @@ DeepSeek-R1-Distill-Llama-70B's notebook differs structurally from the others, s
 Every generative LLM in this study received exactly the same prompt, shown below (also Figure 2 in the paper). To avoid any risk of the template changing across models, the prompt is **not** built on the fly inside each notebook. Instead, every record pair was pre-formatted into this template once, ahead of time, and saved in the `instructions` column of the input data. All fine-tuning and inference notebooks read this column directly and place its content, unchanged, in the **user** role of each model's chat template. The only model-specific step is therefore the chat template itself, which wraps the same user message in each model's own role tokens.
 
 ```text
-You are given two patient records. Your task is to determine whether they belong to the same individual. Consider factors such as name similarity, date of birth, and other identifying attributes. Only respond with "Yes" or "No".
+You are given two patient records. Your task is to determine whether they belong to the same individual.
+Consider factors such as name similarity, date of birth, and other identifying attributes.
+Only respond with "Yes" or "No".
 
 Record 1:
 - First Name: [Record 1 First Name]

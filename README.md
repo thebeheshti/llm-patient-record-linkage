@@ -1,57 +1,31 @@
-# Patient Record Linkage Using Language Models
+### Prompt template
 
-This repo contains all the training and inference code for every model evaluated in *"Leveraging Open-Weight Language Models for Automated Patient Record Linkage"* (Beheshti et al., submitted to *BMC Medical Informatics and Decision Making*).
+Every generative LLM in this study received exactly the same prompt, shown below (also Figure 2 in the paper). To avoid any risk of the template changing across models, the prompt is **not** built on the fly inside each notebook. Instead, every record pair was pre-formatted into this template once, ahead of time, and saved as a single text field alongside the data. All fine-tuning and inference notebooks read these pre-formatted prompts directly, so the only model-specific step is wrapping the prompt in each model's own chat template.
 
-The record linkage pipeline has two independent stages, evaluated separately (see the Methods section of the paper): **blocking** (Experiment 1) and **matching** (Experiment 2). This repository contains the codes for both.
+```text
+You are given two patient records. Your task is to determine whether they belong to the same individual. Consider factors such as name similarity, date of birth, and other identifying attributes. Only respond with "Yes" or "No".
 
-## Data availability
+Record 1:
+- First Name: [Record 1 First Name]
+- Middle Name: [Record 1 Middle Name]
+- Last Name: [Record 1 Last Name]
+- Date of Birth: [Record 1 Date of Birth]
+- SSN: [Record 1 SSN]
+- Sex: [Record 1 Sex]
+- Address: [Record 1 Address]
 
-The underlying patient data contains Protected Health Information (PHI) and is **not included** in this repository, per the manuscript's Data Availability declaration. 
+Record 2:
+- First Name: [Record 2 First Name]
+- Middle Name: [Record 2 Middle Name]
+- Last Name: [Record 2 Last Name]
+- Date of Birth: [Record 2 Date of Birth]
+- SSN: [Record 2 SSN]
+- Sex: [Record 2 Sex]
+- Address: [Record 2 Address]
+```
 
-## Blocking model (Experiment 1)
-
-Corresponds to Figure 1 in the paper.
-
-| File | Description |
-|---|---|
-| `RoBERTa_Embedding_Finetunning.ipynb` | Fine-tunes RoBERTa as a sentence-embedding model (`sentence-transformers`, mean pooling, cosine similarity loss against the Overall Similarity Score) — Figure 1(a). |
-| `RoBERTa_Embedding_Finetuned_Inference.py` | `CandidatePairGenerator` class: encodes both datasets with the fine-tuned embedding model, builds a FAISS index, and retrieves candidate pairs via k-NN search filtered by a cosine similarity threshold.
-
-## Matching model (Experiment 2)
-
-### RoBERTa classifier (encoder-based baseline)
-
-| File | Description |
-|---|---|
-| `RoBERTa_Classification_Finetuning.ipynb` | Fine-tunes RoBERTa as a binary sequence classifier (Match / Non-Match) on serialized record pairs. |
-| `RoBERTa_Classification_Finetuned_Inference.ipynb` | Runs the fine-tuned classifier on the test set and reports accuracy / classification report. |
-
-### Generative LLMs
-
-Fine-tuning and inference code for each open-weight generative LLM evaluated in the study:
-
-| Model | Fine-Tuning | Fine-Tuned Inference | Zero-Shot Inference |
-|---|:---:|:---:|:---:|
-| Llama-3.2-3B | ✓ | ✓ | ✓ |
-| Llama-3.1-8B | ✓ | ✓ | ✓ |
-| Mistral-7B | ✓ | ✓ | ✓ |
-| Mistral-Small-24B | ✓ | ✓ | ✓ |
-| Gemma-3-27B | ✓ | ✓ | ✓ |
-| Llama-3.3-70B | — | — | ✓ |
-| DeepSeek-R1-Distill-Llama-70B | — | — | ✓ |
-
-Llama-3.3-70B and DeepSeek-R1 were evaluated zero-shot only (no fine-tuning), per the paper's Methods and Table 3.
-
-DeepSeek-R1-Distill-Llama-70B's notebook differs structurally from the others, since it is a reasoning model that emits a chain-of-thought trace (wrapped in `<think>...</think>`) before its final answer:
-- Evaluated only on the challenging subset of the test set (0.65 < Overall Similarity Score < 1.0), not the full test set, per §3.3 of the paper.
-- Uses a much larger generation budget (`max_new_tokens=2048` vs. 4 for every other model) and a correspondingly larger `max_seq_length`, to allow the reasoning trace to complete.
-- Answer extraction searches only the text *after* `</think>` for "Yes"/"No", rather than the whole decoded output, to avoid picking up an incidental mention of either word from within the reasoning trace itself.
-- Uses its own prompt format (`<｜begin▁of▁sentence｜><｜User｜>...<｜Assistant｜>`) rather than a chat template, since no Unsloth-registered chat template exists for this model.
-
-## Requirements
-
-- [`unsloth`](https://github.com/unslothai/unsloth) (generative LLM fine-tuning/inference)
-- `transformers`, `trl`, `datasets`, `torch`
-- `sentence-transformers`, `faiss` (blocking model)
-- `pandas`, `numpy`, `scikit-learn`, `evaluate`, `tqdm`
-
+Notes:
+- Missing identifiers (e.g., SSN or Address) are filled in with the word `Unknown`.
+- The system prompt `You are a helpful assistant` is used for all models during both fine-tuning and inference, except DeepSeek-R1, which, following its developers' recommendation, is run without a system prompt.
+- During fine-tuning, the ground-truth label (`Yes` or `No`) is supplied as the assistant's response; at inference, the model generates it.
+- Because the pre-formatted prompts contain patient identifiers, they are not included in this repository. To reproduce the pipeline on your own data, format each record pair into the template above before running the notebooks.

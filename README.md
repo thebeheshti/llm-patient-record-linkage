@@ -1,6 +1,6 @@
-# Code Availability
+# Patient Record Linkage Using Language Models
 
-Training and inference code for every model evaluated in *"Leveraging Open-Weight Language Models for Automated Patient Record Linkage"* (Beheshti et al., submitted to *BMC Medical Informatics and Decision Making*).
+This repo contains all the training and inference code for every model evaluated in *"Leveraging Open-Weight Language Models for Automated Patient Record Linkage"* (Beheshti et al., submitted to *BMC Medical Informatics and Decision Making*).
 
 The record linkage pipeline has two independent stages, evaluated separately (see the Methods section of the paper): **blocking** (Experiment 1) and **matching** (Experiment 2). This repository contains the codes for both.
 
